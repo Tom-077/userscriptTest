@@ -1,0 +1,47 @@
+// ==UserScript==
+// @name         Mixrootmod AdBlock Bypass
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Decodes the Base64 hidden value and redirects to the destination URL automatically.
+// @author       Your Name
+// @match        *://mixrootmod.com/*
+// @grant        none
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    // Find the hidden input field containing the Base64 value
+    const inputField = document.querySelector('input[name="newwpsafelink"]');
+    if (inputField && inputField.value) {
+        try {
+            // Decode the first Base64-encoded value
+            const firstDecodedValue = atob(inputField.value);
+
+            // Parse the JSON object
+            const jsonData = JSON.parse(firstDecodedValue);
+
+            // Extract the second Base64-encoded value
+            if (jsonData.linkr) {
+                const urlParams = new URLSearchParams(jsonData.linkr);
+                const safelinkRedirect = urlParams.get('safelink_redirect');
+                if (safelinkRedirect) {
+                    // Decode the second Base64-encoded value
+                    const secondDecodedValue = atob(safelinkRedirect);
+                    const finalData = JSON.parse(secondDecodedValue);
+
+                    // Extract the final URL and redirect
+                    if (finalData.safelinks) {
+                        window.location.href = finalData.safelinks;
+                    } else if (finalData.safelink) {
+                        window.location.href = finalData.safelink;
+                    } else if (finalData.safelink_redirect_url) {
+                        window.location.href = finalData.safelink_redirect_url;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error decoding values:', error);
+        }
+    }
+})();
