@@ -1,47 +1,81 @@
 // ==UserScript==
-// @name         Mixrootmod AdBlock Bypass
-// @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Decodes the Base64 hidden value and redirects to the destination URL automatically.
-// @author       Your Name
-// @match        *://mixrootmod.com/*
-// @grant        none
+// @name        New script mixrootmod.com
+// @namespace   Violentmonkey Scripts
+// @match       https://mixrootmod.com/*
+// @grant       none
+// @version     1.0
+// @author      -
+// @description 13/01/2025 13:50:27
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    // Find the hidden input field containing the Base64 value
-    const inputField = document.querySelector('input[name="newwpsafelink"]');
-    if (inputField && inputField.value) {
-        try {
-            // Decode the first Base64-encoded value
-            const firstDecodedValue = atob(inputField.value);
+    // Ensure the script runs after the page has fully loaded
+    window.addEventListener('load', function () {
+        console.log("Page loaded. Starting AdBlock bypass script...");
 
-            // Parse the JSON object
-            const jsonData = JSON.parse(firstDecodedValue);
+        // Locate the hidden input field
+        const inputField = document.querySelector('input[name="newwpsafelink"]');
+        if (inputField && inputField.value) {
+            console.log("Found hidden input field:", inputField);
 
-            // Extract the second Base64-encoded value
-            if (jsonData.linkr) {
-                const urlParams = new URLSearchParams(jsonData.linkr);
-                const safelinkRedirect = urlParams.get('safelink_redirect');
-                if (safelinkRedirect) {
-                    // Decode the second Base64-encoded value
-                    const secondDecodedValue = atob(safelinkRedirect);
-                    const finalData = JSON.parse(secondDecodedValue);
+            try {
+                // Step 1: Decode the first Base64-encoded value
+                const firstDecodedValue = atob(inputField.value);
+                console.log("First Base64 decoded value:", firstDecodedValue);
 
-                    // Extract the final URL and redirect
-                    if (finalData.safelinks) {
-                        window.location.href = finalData.safelinks;
-                    } else if (finalData.safelink) {
-                        window.location.href = finalData.safelink;
-                    } else if (finalData.safelink_redirect_url) {
-                        window.location.href = finalData.safelink_redirect_url;
+                // Step 2: Parse the JSON object
+                const jsonData = JSON.parse(firstDecodedValue);
+                console.log("Parsed JSON data:", jsonData);
+
+                // Step 3: Extract the `linkr` field
+                if (jsonData.linkr) {
+                    console.log("Found 'linkr' field:", jsonData.linkr);
+
+                    // Extract the `safelink_redirect` parameter from the URL
+                    const safelinkMatch = jsonData.linkr.match(/safelink_redirect=([^&]+)/);
+                    if (safelinkMatch && safelinkMatch[1]) {
+                        const safelinkRedirect = safelinkMatch[1];
+                        console.log("Second Base64 encoded value found:", safelinkRedirect);
+
+                        // Step 4: Decode the second Base64-encoded value
+                        const secondDecodedValue = atob(safelinkRedirect);
+                        console.log("Second Base64 decoded value:", secondDecodedValue);
+
+                        // Step 5: Parse the final JSON data
+                        const finalData = JSON.parse(secondDecodedValue);
+                        console.log("Final parsed JSON data:", finalData);
+
+                        // Step 6: Extract and decode the final URL
+                        let finalUrl = null;
+                        if (finalData.safelinks) {
+                            finalUrl = finalData.safelinks;
+                        } else if (finalData.safelink) {
+                            finalUrl = finalData.safelink;
+                        } else if (finalData.safelink_redirect_url) {
+                            finalUrl = finalData.safelink_redirect_url;
+                        }
+
+                        if (finalUrl) {
+                            // Decode the URL if it is URL-encoded
+                            finalUrl = decodeURIComponent(finalUrl);
+                            console.log("Redirecting to final URL:", finalUrl);
+                            window.location.href = finalUrl;
+                        } else {
+                            console.log("No valid redirect URL found in the final JSON data.");
+                        }
+                    } else {
+                        console.log("No valid 'safelink_redirect' parameter found in the 'linkr' URL.");
                     }
+                } else {
+                    console.log("No 'linkr' field found in the JSON data.");
                 }
+            } catch (error) {
+                console.error("Error during AdBlock bypass script execution:", error);
             }
-        } catch (error) {
-            console.error('Error decoding values:', error);
+        } else {
+            console.log("Hidden input field not found or no value present.");
         }
-    }
+    });
 })();
